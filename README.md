@@ -2,6 +2,20 @@
 
 Turns narrative cyber threat intelligence reports (PDF/text) into STIX 2.1 bundles using Claude, then validates the result against the official schema.
 
+## Getting the code
+
+This repo includes the official STIX 2.1 schemas as a **git submodule**, so a plain clone leaves that folder empty. Clone it like this instead:
+
+```
+git clone --recurse-submodules https://github.com/matthewusmith/STIX_Generator.git
+```
+
+Already cloned without `--recurse-submodules`? Run this from inside the folder to fetch it after the fact:
+
+```
+git submodule update --init
+```
+
 ## Running the interactive notebook (`phase1_walkthrough.ipynb`)
 
 This is the easiest way to run and experiment with the pipeline — no command-line Python knowledge required beyond following these steps. Jupyter Lab and this project's dependencies are already installed and set up for you; you're just launching a program and clicking things.
@@ -81,4 +95,4 @@ If you'd rather run the whole pipeline in one shot without the notebook:
 - `data/reports/` — put source PDF/text reports here
 - `data/output/` — generated STIX bundles land here
 - `phase1_walkthrough.ipynb` — the interactive notebook described above
-- `third_party/cti-stix2-json-schemas/` — vendored official STIX 2.1 JSON schemas (see note in `stix_generator/validation/validator.py` for why)
+- `third_party/cti-stix2-json-schemas/` — official STIX 2.1 JSON schemas, included as a git submodule (see note in `stix_generator/validation/validator.py` for why); see "Getting the code" above if this folder looks empty
