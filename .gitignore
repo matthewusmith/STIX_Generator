@@ -1,0 +1,17 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Generated output
+data/output/
+data/reports/

@@ -1,0 +1,6 @@
+anthropic>=0.40.0
+stix2>=3.0.1
+stix2-validator>=3.2.0
+pydantic>=2.7
+python-dotenv>=1.0
+pypdf>=4.0
