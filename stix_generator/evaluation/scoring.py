@@ -24,6 +24,11 @@ def _normalize_name(text: str) -> str:
     return text.strip()
 
 
+def _trailing_digits(text: str) -> str:
+    match = re.search(r"(\d+)$", text)
+    return match.group(1) if match else ""
+
+
 def _name_similarity(names_a: list[str], names_b: list[str]) -> float:
     best = 0.0
     for a in names_a:
@@ -33,6 +38,12 @@ def _name_similarity(names_a: list[str], names_b: list[str]) -> float:
         for b in names_b:
             nb = _normalize_name(b)
             if not nb:
+                continue
+            # A trailing-digit mismatch (apt1 vs apt10, fin7 vs fin70) is a near-1.0
+            # SequenceMatcher ratio but almost always a distinct, deliberately-numbered
+            # real-world entity in CTI naming conventions -- never treat it as a match
+            # regardless of how close the ratio is.
+            if _trailing_digits(na) != _trailing_digits(nb):
                 continue
             ratio = SequenceMatcher(None, na, nb).ratio()
             best = max(best, ratio)
@@ -172,7 +183,7 @@ def _match_relationships(gold_rels, pred_rels, gold_to_pred_id: dict[str, str]) 
         mapped_source = gold_to_pred_id.get(g.source_local_id)
         mapped_target = gold_to_pred_id.get(g.target_local_id)
         found = None
-        if mapped_source and mapped_target:
+        if mapped_source is not None and mapped_target is not None:
             for idx, p in enumerate(pred_rels):
                 if idx in consumed_pred:
                     continue

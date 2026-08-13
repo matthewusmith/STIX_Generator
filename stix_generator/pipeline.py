@@ -12,6 +12,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from stix_generator.cli_common import add_extraction_args, print_grounding_warnings
 from stix_generator.construction.builder import build_bundle
 from stix_generator.extraction.extractor import DEFAULT_MODEL, extract
 from stix_generator.ingestion.loader import load_report
@@ -30,8 +31,7 @@ def run(report_path: Path, output_path: Path, model: str = DEFAULT_MODEL, enable
         f"{len(extraction.observables)} observables, "
         f"{len(extraction.relationships)} relationships"
     )
-    for warning in grounding_warnings:
-        print(f"      GROUNDING WARNING: {warning}")
+    print_grounding_warnings(grounding_warnings, indent="      ")
 
     print("[3/4] Constructing STIX bundle...")
     bundle, warnings = build_bundle(extraction)
@@ -62,15 +62,8 @@ def main() -> None:
     load_dotenv()
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("report", type=Path, help="Path to a .pdf, .txt, or .md CTI report")
+    add_extraction_args(parser)
     parser.add_argument("--out", type=Path, default=None, help="Output bundle path (default: data/output/<report_stem>.json)")
-    parser.add_argument("--model", type=str, default=DEFAULT_MODEL, help="Claude model to use for extraction")
-    parser.add_argument(
-        "--critic",
-        action="store_true",
-        help="Run an extra self-critique pass after extraction to catch hallucinations/omissions "
-        "(roughly doubles extraction API cost)",
-    )
     args = parser.parse_args()
 
     output_path = args.out or Path("data/output") / f"{args.report.stem}.json"

@@ -11,8 +11,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from stix_generator.cli_common import add_extraction_args, print_grounding_warnings
 from stix_generator.evaluation.scoring import print_scorecard, score_extraction
-from stix_generator.extraction.extractor import DEFAULT_MODEL, extract
+from stix_generator.extraction.extractor import extract
 from stix_generator.extraction.schema import ExtractionResult
 from stix_generator.ingestion.loader import load_report
 
@@ -21,7 +22,7 @@ def main() -> None:
     load_dotenv()
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("report", type=Path, help="Path to a .pdf, .txt, or .md CTI report")
+    add_extraction_args(parser)
     parser.add_argument(
         "--golden",
         type=Path,
@@ -35,12 +36,6 @@ def main() -> None:
         help="Run extraction once and write the raw result as a DRAFT gold file instead of scoring "
         "(requires hand review before it's trustworthy ground truth)",
     )
-    parser.add_argument("--model", type=str, default=DEFAULT_MODEL, help="Claude model to use for extraction")
-    parser.add_argument(
-        "--critic",
-        action="store_true",
-        help="Run the extra self-critique pass before scoring/saving (roughly doubles API cost)",
-    )
     args = parser.parse_args()
 
     golden_path = args.golden or Path("data/golden") / f"{args.report.stem}.json"
@@ -50,8 +45,7 @@ def main() -> None:
 
     print(f"Extracting via {args.model}{' (with critic pass)' if args.critic else ''}...")
     result, grounding_warnings = extract(report_text, model=args.model, enable_critic=args.critic)
-    for warning in grounding_warnings:
-        print(f"  GROUNDING WARNING: {warning}")
+    print_grounding_warnings(grounding_warnings)
 
     if args.save_golden:
         golden_path.parent.mkdir(parents=True, exist_ok=True)

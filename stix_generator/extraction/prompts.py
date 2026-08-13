@@ -62,8 +62,7 @@ generic advice) — that is not threat intelligence to extract.
 ## Evidence
 
 For every entity, observable, and relationship, set `evidence_quote` to a short verbatim quote \
-(<=25 words) copied exactly from the report text that supports it — not a paraphrase. Leave the \
-`grounding_status` field alone; it is filled in automatically after your response.
+(<=25 words) copied exactly from the report text that supports it — not a paraphrase.
 """
 
 
@@ -77,8 +76,8 @@ def build_user_prompt(report_text: str) -> str:
     )
 
 
-CRITIC_PROMPT = """You are now reviewing your own extraction against the full report text, acting as a \
-skeptical second reader. Check for two distinct kinds of error:
+CRITIC_PROMPT = """You are now reviewing your own extraction against the report text you were given \
+above, acting as a skeptical second reader. Check for two distinct kinds of error:
 
 1. **Hallucinations / unsupported items** — anything in your draft that the text doesn't actually \
 state or clearly imply (including a bad `evidence_quote` that doesn't really appear in the text or \
@@ -92,10 +91,5 @@ one more time with the complete corrected result — the full set of entities, o
 relationships, not just the changes."""
 
 
-def build_critic_user_message(report_text: str) -> str:
-    return (
-        f"{CRITIC_PROMPT}\n\n"
-        "--- BEGIN REPORT ---\n"
-        f"{report_text}\n"
-        "--- END REPORT ---"
-    )
+def build_critic_user_message() -> str:
+    return CRITIC_PROMPT

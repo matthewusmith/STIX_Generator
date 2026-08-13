@@ -30,7 +30,23 @@ ObservableType = Literal[
 ]
 
 
-class ExtractedEntity(BaseModel):
+class GroundedFields(BaseModel):
+    """Evidence/grounding fields shared by every extracted item type. grounding_status
+    is stripped out of the model-facing tool schema (see extraction_tool_schema) and
+    computed deterministically after the fact — evidence_quote is the only one of
+    these two the model actually supplies."""
+
+    evidence_quote: str = Field(
+        default="",
+        description="A short verbatim quote (<=25 words) copied exactly from the report text supporting this item.",
+    )
+    grounding_status: Literal["verified", "unverified"] = Field(
+        default="unverified",
+        description="Set automatically after extraction — do not populate this yourself.",
+    )
+
+
+class ExtractedEntity(GroundedFields):
     local_id: str = Field(description="Short unique label the model invents, e.g. 'TA1', 'MAL1'. Used only to wire up relationships below.")
     type: EntityType
     name: str
@@ -40,44 +56,20 @@ class ExtractedEntity(BaseModel):
         default_factory=dict,
         description="Type-specific fields, see system prompt for the allowed keys per entity type.",
     )
-    evidence_quote: str = Field(
-        default="",
-        description="A short verbatim quote (<=25 words) copied exactly from the report text supporting this item.",
-    )
-    grounding_status: Literal["verified", "unverified"] = Field(
-        default="unverified",
-        description="Set automatically after extraction — do not populate this yourself.",
-    )
 
 
-class ExtractedObservable(BaseModel):
+class ExtractedObservable(GroundedFields):
     local_id: str = Field(description="Short unique label, e.g. 'DOM1', 'IP1'.")
     observable_type: ObservableType
     value: str = Field(description="Refanged value, e.g. 'code.newcli.com' not 'code.newcli[.]com'.")
     description: str = ""
-    evidence_quote: str = Field(
-        default="",
-        description="A short verbatim quote (<=25 words) copied exactly from the report text supporting this item.",
-    )
-    grounding_status: Literal["verified", "unverified"] = Field(
-        default="unverified",
-        description="Set automatically after extraction — do not populate this yourself.",
-    )
 
 
-class ExtractedRelationship(BaseModel):
+class ExtractedRelationship(GroundedFields):
     source_local_id: str
     relationship_type: str = Field(description="STIX relationship-type verb, e.g. 'uses', 'targets', 'exploits', 'located-at', 'indicates'.")
     target_local_id: str
     description: str = ""
-    evidence_quote: str = Field(
-        default="",
-        description="A short verbatim quote (<=25 words) copied exactly from the report text supporting this item.",
-    )
-    grounding_status: Literal["verified", "unverified"] = Field(
-        default="unverified",
-        description="Set automatically after extraction — do not populate this yourself.",
-    )
 
 
 class ExtractionResult(BaseModel):
@@ -92,6 +84,11 @@ EXTRACTION_TOOL_NAME = "record_extraction"
 def extraction_tool_schema() -> dict:
     """JSON schema for the Claude tool-use call that produces an ExtractionResult."""
     schema = ExtractionResult.model_json_schema()
+    # grounding_status must never be model-supplied (see GroundedFields) — strip it from
+    # what the model can see entirely, rather than relying on a prose instruction, so an
+    # off-vocabulary value can't burn a retry on a self-inflicted schema error.
+    for definition in schema.get("$defs", {}).values():
+        definition.get("properties", {}).pop("grounding_status", None)
     return {
         "name": EXTRACTION_TOOL_NAME,
         "description": "Record all threat intelligence entities, observables, and relationships extracted from the report.",

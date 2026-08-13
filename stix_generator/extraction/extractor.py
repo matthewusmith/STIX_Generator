@@ -31,6 +31,7 @@ def _request_extraction(
     (so a caller can continue the conversation, e.g. for a critic pass) and returns
     (result, tool_use_id)."""
     current_max_tokens = max_tokens
+    start_len = len(messages)
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
         response = client.messages.create(
@@ -64,6 +65,10 @@ def _request_extraction(
                 f"      extraction attempt {attempt} was truncated (stop_reason=max_tokens) "
                 f"before finishing; retrying with max_tokens={current_max_tokens}..."
             )
+            # Discard anything this request appended on an earlier failed attempt (e.g. a
+            # schema-error correction turn) so the retry starts from the same clean state
+            # this logical request began at, not a conversation biased by a prior mistake.
+            del messages[start_len:]
             continue
 
         try:
@@ -122,11 +127,17 @@ def extract(
                     },
                     {
                         "type": "text",
-                        "text": build_critic_user_message(report_text),
+                        "text": build_critic_user_message(),
                     },
                 ],
             }
         )
-        result, _ = _request_extraction(client, model, tools, tool_choice, messages, max_tokens)
+        try:
+            result, _ = _request_extraction(client, model, tools, tool_choice, messages, max_tokens)
+        except Exception as exc:
+            # The critic pass is a purely additive quality check on top of an already-valid,
+            # already-paid-for draft -- its failure shouldn't turn a successful extraction
+            # into a total one, so fall back to the pre-critic draft instead of re-raising.
+            print(f"      critic pass failed ({exc}); keeping pre-critic draft.")
 
     return verify_grounding(result, report_text)
