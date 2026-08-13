@@ -1,0 +1,845 @@
+{
+  "entities": [
+    {
+      "local_id": "TA1",
+      "type": "threat-actor",
+      "name": "knaithe",
+      "aliases": [
+        "KnYuan"
+      ],
+      "description": "Chinese-speaking threat actor who orchestrated an AI-enabled autonomous hacking campaign, combining autonomous AI-driven enumeration with manual exploitation achieving confirmed impact. Based in Zhuhai, China, and self-described as an opportunistic exploit operator and binary security researcher.",
+      "properties": {
+        "roles": [
+          "opportunistic exploit operator",
+          "binary security researcher"
+        ]
+      },
+      "evidence_quote": "The actor, operating under the aliases knaithe and KnYuan, leveraged DeepSeek, via the Hermes Agent framework, as their autonomous offensive operator.",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "MAL1",
+      "type": "tool",
+      "name": "DeepSeek",
+      "aliases": [],
+      "description": "Large language model used by the actor as their autonomous offensive operator/reasoning engine, accessed via the Hermes Agent framework, chosen for its lack of built-in safety layer.",
+      "properties": {
+        "tool_types": [
+          "AI model"
+        ]
+      },
+      "evidence_quote": "leveraged DeepSeek, via the Hermes Agent framework, as their autonomous offensive operator",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL1",
+      "type": "tool",
+      "name": "Hermes Agent",
+      "aliases": [
+        "NousResearch Hermes Agent"
+      ],
+      "description": "Open-source AI agent orchestration framework used by the actor to provide terminal access, Telegram-based command and control, and a skills system, with DeepSeek as its reasoning engine.",
+      "properties": {
+        "tool_types": [
+          "AI agent framework"
+        ]
+      },
+      "evidence_quote": "Hermes Agent provided orchestration (terminal access, Telegram-based command and control, and the skills system) while DeepSeek served as the reasoning engine",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL2",
+      "type": "tool",
+      "name": "Qwen",
+      "aliases": [],
+      "description": "Large language model configured by the actor alongside GLM, Kimi, and MiniMax, consistent with evaluating Chinese-market AI models; Qwen Code saw minimal usage (two sessions).",
+      "properties": {
+        "tool_types": [
+          "AI model"
+        ]
+      },
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL3",
+      "type": "tool",
+      "name": "GLM",
+      "aliases": [],
+      "description": "Large language model configured by the actor as part of evaluating multiple AI platforms.",
+      "properties": {
+        "tool_types": [
+          "AI model"
+        ]
+      },
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL4",
+      "type": "tool",
+      "name": "Kimi",
+      "aliases": [],
+      "description": "Large language model configured by the actor as part of evaluating multiple AI platforms.",
+      "properties": {
+        "tool_types": [
+          "AI model"
+        ]
+      },
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL5",
+      "type": "tool",
+      "name": "MiniMax",
+      "aliases": [],
+      "description": "Large language model configured by the actor as part of evaluating multiple AI platforms.",
+      "properties": {
+        "tool_types": [
+          "AI model"
+        ]
+      },
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL6",
+      "type": "tool",
+      "name": "Claude Code",
+      "aliases": [],
+      "description": "Western AI coding tool used in limited capacity by the actor for connectivity testing and proxy validation, routed through a third-party proxy to reduce traceability; anti-attribution settings enabled.",
+      "properties": {
+        "tool_types": [
+          "AI coding assistant"
+        ]
+      },
+      "evidence_quote": "Claude Code for connectivity testing and proxy validation",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL7",
+      "type": "tool",
+      "name": "Codex",
+      "aliases": [],
+      "description": "Western AI coding tool showing signs of usage on exploit development directories; actor marked directories as trusted granting full access; response storage disabled to limit forensic evidence; account later flagged/disabled by OpenAI's provider-side safety systems.",
+      "properties": {
+        "tool_types": [
+          "AI coding assistant"
+        ]
+      },
+      "evidence_quote": "There were also signs of usage of Codex on exploit development directories.",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL8",
+      "type": "tool",
+      "name": "FofaMap-Platinum-Full-Expert MCP server",
+      "aliases": [
+        "FofaMap"
+      ],
+      "description": "Open-source Model Context Protocol (MCP) server integrated by the actor, exposing FOFA asset search, Nuclei scan generation, and a DeepSeek-powered natural-language-to-FOFA query translator.",
+      "properties": {
+        "tool_types": [
+          "MCP server",
+          "reconnaissance"
+        ]
+      },
+      "evidence_quote": "The actor also integrated the open-source FofaMap-Platinum-Full-Expert Model Context Protocol (MCP) server",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL9",
+      "type": "tool",
+      "name": "FOFA",
+      "aliases": [],
+      "description": "Internet asset search engine used by the actor (via custom fofoapi.py script and MCP integration) to enumerate targets and their vulnerabilities.",
+      "properties": {
+        "tool_types": [
+          "reconnaissance",
+          "search engine"
+        ]
+      },
+      "evidence_quote": "Independently enumerating targets and their vulnerabilities using FOFA",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL10",
+      "type": "tool",
+      "name": "1DayNews",
+      "aliases": [],
+      "description": "Automated vulnerability intelligence pipeline maintained by the actor on GitHub that aggregates RCE disclosures from 17 sources, uses DeepSeek to filter for exploitability, and distributes alerts via Telegram.",
+      "properties": {
+        "tool_types": [
+          "vulnerability intelligence pipeline"
+        ]
+      },
+      "evidence_quote": "their maintenance of 1DayNews, an automated vulnerability intelligence pipeline",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL11",
+      "type": "tool",
+      "name": "Telegram",
+      "aliases": [],
+      "description": "Messaging platform used by the actor to orchestrate the Hermes Agent operator and to distribute vulnerability alerts from 1DayNews.",
+      "properties": {
+        "tool_types": [
+          "command-and-control channel"
+        ]
+      },
+      "evidence_quote": "They orchestrated this operator via Telegram for the following activities",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "INFRA1",
+      "type": "infrastructure",
+      "name": "code.newcli.com proxy",
+      "aliases": [],
+      "description": "Third-party proxy service used by the actor to route Claude Code and Codex traffic to reduce traceability.",
+      "properties": {
+        "infrastructure_types": [
+          "proxy"
+        ]
+      },
+      "evidence_quote": "They routed the two Western tools, Claude Code and Codex, through a third-party proxy service (code.newcli[.]com) to reduce traceability.",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "INFRA2",
+      "type": "infrastructure",
+      "name": "Actor home directory file server",
+      "aliases": [],
+      "description": "HTTP file server started by the Hermes Agent from the actor's home directory (/home/worker), which inadvertently exposed the actor's entire operational workspace including tool configurations, API keys, exploit scripts, target lists, and session logs.",
+      "properties": {
+        "infrastructure_types": [
+          "exposed staging/attacker workstation"
+        ]
+      },
+      "evidence_quote": "Hermes Agent, responding to a Telegram command, started an HTTP file server (python3 -m http.server 8888) from the actor's home directory (/home/worker)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN1",
+      "type": "vulnerability",
+      "name": "CVE-2026-33017",
+      "aliases": [],
+      "description": "Vulnerability in Langflow exploited autonomously by the actor's Hermes Agent/DeepSeek; exploitation attempt failed because auto_login was disabled.",
+      "properties": {
+        "cve_id": "CVE-2026-33017",
+        "cvss_score": 9.8
+      },
+      "evidence_quote": "DeepSeek identified a Langflow vulnerability (CVE-2026-33017, CVSS 9.8) and autonomously attempted exploitation",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN2",
+      "type": "vulnerability",
+      "name": "CVE-2026-21858",
+      "aliases": [],
+      "description": "n8n arbitrary file read vulnerability, CVSS 10.0, patched in 1.121.0, chained with CVE-2025-68613 by the actor's autonomous DeepSeek-driven exploitation attempts against n8n; failed due to authentication requirements.",
+      "properties": {
+        "cve_id": "CVE-2026-21858",
+        "cvss_score": 10.0,
+        "patched_version": "1.121.0"
+      },
+      "evidence_quote": "CVE-2026-21858 (arbitrary file read, CVSS 10.0)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN3",
+      "type": "vulnerability",
+      "name": "CVE-2025-68613",
+      "aliases": [],
+      "description": "n8n sandbox bypass to remote code execution vulnerability, CVSS 9.9, patched in 1.120.4, chained with CVE-2026-21858 in the actor's autonomous exploitation attempts against n8n.",
+      "properties": {
+        "cve_id": "CVE-2025-68613",
+        "cvss_score": 9.9,
+        "patched_version": "1.120.4"
+      },
+      "evidence_quote": "CVE-2025-68613 (sandbox bypass to remote code execution (RCE), CVSS 9.9)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN4",
+      "type": "vulnerability",
+      "name": "CVE-2026-3055",
+      "aliases": [],
+      "description": "Citrix NetScaler ADC & Gateway out-of-bounds memory read vulnerability manually exploited by the actor, resulting in data exfiltration from three organizations, including a persistently targeted Malaysian government entity.",
+      "properties": {
+        "cve_id": "CVE-2026-3055",
+        "cvss_score": 9.8
+      },
+      "evidence_quote": "Data exfiltration from three organizations via a Citrix NetScaler vulnerability (CVE-2026-3055)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN5",
+      "type": "vulnerability",
+      "name": "CVE-2026-39987",
+      "aliases": [],
+      "description": "Marimo Notebook vulnerability manually exploited by the actor, resulting in confirmed command execution on 11 instances.",
+      "properties": {
+        "cve_id": "CVE-2026-39987",
+        "cvss_score": 9.8
+      },
+      "evidence_quote": "Command execution on 11 Marimo notebook instances (CVE-2026-39987)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN6",
+      "type": "vulnerability",
+      "name": "CVE-2026-34486",
+      "aliases": [],
+      "description": "Apache Tomcat Java deserialization vulnerability manually exploited by the actor via reverse shell attempts against nine servers.",
+      "properties": {
+        "cve_id": "CVE-2026-34486",
+        "cvss_score": 7.5
+      },
+      "evidence_quote": "Java deserialization reverse shell attempts against nine Apache Tomcat servers (CVE-2026-34486)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN7",
+      "type": "vulnerability",
+      "name": "CVE-2026-33824",
+      "aliases": [],
+      "description": "Windows IKE Extensions (IKE VPN) vulnerability manually exploited by the actor via reverse shell callbacks targeting three IKE VPN endpoints.",
+      "properties": {
+        "cve_id": "CVE-2026-33824",
+        "cvss_score": 9.8
+      },
+      "evidence_quote": "Reverse shell callbacks targeting three IKE VPN endpoints (CVE-2026-33824)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "VULN8",
+      "type": "vulnerability",
+      "name": "CVE-2026-0300",
+      "aliases": [],
+      "description": "Buffer overflow vulnerability in PAN-OS User-ID Authentication Portal (Captive Portal); actor cloned a public non-functional PoC repository but did not achieve execution.",
+      "properties": {
+        "cve_id": "CVE-2026-0300",
+        "cvss_score": 9.8
+      },
+      "evidence_quote": "The actor cloned a public repository (qassam-315/PAN-OS-User-ID-Buffer-Overflow-PoC) for CVE-2026-0300, a buffer overflow vulnerability in the PAN-OS User-ID Authentication Portal",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "AP1",
+      "type": "attack-pattern",
+      "name": "Autonomous vulnerability enumeration and exploitation via AI agent",
+      "aliases": [],
+      "description": "The actor used the Hermes Agent/DeepSeek to autonomously enumerate targets via FOFA, search for PoCs on GitHub, prioritize vulnerabilities, and attempt exploitation without human intervention.",
+      "properties": {},
+      "evidence_quote": "Their Hermes Agent autonomously conducted searches for known critical-severity Common Vulnerabilities and Exposures (CVEs).",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "AP2",
+      "type": "attack-pattern",
+      "name": "Exploit Public-Facing Application",
+      "aliases": [],
+      "description": "The actor exploited public-facing applications (Langflow, n8n, Citrix NetScaler, Marimo, Tomcat, IKE VPN, PAN-OS) using known CVEs.",
+      "properties": {
+        "attack_pattern_id": "T1190"
+      },
+      "evidence_quote": "targeted infrastructure using seven vulnerabilities, combining autonomous AI-driven enumeration with manual exploitation",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "AP3",
+      "type": "attack-pattern",
+      "name": "Data exfiltration via memory read vulnerability",
+      "aliases": [],
+      "description": "The actor exploited Citrix NetScaler's out-of-bounds memory read to exfiltrate memory data and search for authentication cookies, indicating session hijacking intent.",
+      "properties": {},
+      "evidence_quote": "The actor searched the exfiltrated data for NetScaler authentication cookies (NSC_AAAC=), indicating session hijacking intent.",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "AP4",
+      "type": "attack-pattern",
+      "name": "Unauthenticated WebSocket exploitation",
+      "aliases": [],
+      "description": "Custom-created skill within Hermes Agent for exploiting unauthenticated WebSocket services.",
+      "properties": {},
+      "evidence_quote": "web-terminal-exploitation: unauthenticated WebSocket exploitation, custom-created",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "AP5",
+      "type": "attack-pattern",
+      "name": "LLM jailbreaking (godmode)",
+      "aliases": [],
+      "description": "A framework-bundled red-teaming skill named godmode used to jailbreak the LLM and remove safety restrictions for offensive use.",
+      "properties": {},
+      "evidence_quote": "godmode: LLM jailbreaking, framework-bundled",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "AP6",
+      "type": "attack-pattern",
+      "name": "Reverse shell deployment",
+      "aliases": [],
+      "description": "The actor attempted reverse shell callbacks/attempts against Apache Tomcat and IKE VPN endpoints.",
+      "properties": {},
+      "evidence_quote": "Reverse shell callbacks targeting three IKE VPN endpoints (CVE-2026-33824)",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "CAMP1",
+      "type": "campaign",
+      "name": "AI-enabled autonomous hacking campaign by knaithe/KnYuan",
+      "aliases": [],
+      "description": "Campaign combining autonomous AI-driven vulnerability enumeration and exploitation (via DeepSeek/Hermes Agent) with manual exploitation techniques, targeting infrastructure across three countries using seven vulnerabilities.",
+      "properties": {
+        "first_seen": "2026-05-07",
+        "objective": "Opportunistic exploitation of internet-facing infrastructure, data exfiltration, and establishing autonomous AI offensive capability"
+      },
+      "evidence_quote": "Unit 42 identified an AI-enabled autonomous hacking campaign carried out by a Chinese-speaking threat actor.",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "LOC1",
+      "type": "location",
+      "name": "China",
+      "aliases": [],
+      "description": "Country where the threat actor is based (Zhuhai) and where the autonomous AI campaigns targeted domestic infrastructure indiscriminately.",
+      "properties": {
+        "country": "CN"
+      },
+      "evidence_quote": "The Chinese-speaking actor is based in Zhuhai, China",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "LOC2",
+      "type": "location",
+      "name": "Malaysia",
+      "aliases": [],
+      "description": "Country whose government entity was persistently and manually targeted by the actor over multiple days with refined exploitation and proxy anonymization.",
+      "properties": {
+        "country": "MY"
+      },
+      "evidence_quote": "The actor persistently targeted a government entity in Malaysia and they exploited it over multiple days",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "ID1",
+      "type": "identity",
+      "name": "Government entity in Malaysia",
+      "aliases": [],
+      "description": "Malaysian government victim organization targeted persistently via Citrix NetScaler exploitation with data exfiltration and session hijacking intent.",
+      "properties": {
+        "identity_class": "organization",
+        "sectors": [
+          "government"
+        ]
+      },
+      "evidence_quote": "The actor persistently targeted a government entity in Malaysia and they exploited it over multiple days with memory grooming parameters and maximum read attempts.",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "TOOL12",
+      "type": "tool",
+      "name": "Qwen Code",
+      "aliases": [],
+      "description": "AI coding tool used in limited capacity by the actor (two sessions total), configured with multiple backend LLMs (Qwen, GLM, Kimi, MiniMax) accessed via the dashscope direct API.",
+      "properties": {
+        "tool_types": [
+          "AI coding assistant"
+        ]
+      },
+      "evidence_quote": "Qwen Code: There was minimal usage by the actor, including two sessions total.",
+      "grounding_status": "verified"
+    }
+  ],
+  "observables": [
+    {
+      "local_id": "URL1",
+      "observable_type": "domain-name",
+      "value": "api.deepseek.com",
+      "description": "Direct API endpoint used by the actor to access DeepSeek for the Hermes Agent.",
+      "evidence_quote": "Direct API: api.deepsee k[.]com",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "URL2",
+      "observable_type": "domain-name",
+      "value": "code.newcli.com",
+      "description": "Third-party proxy domain used to route Claude Code and Codex traffic to reduce traceability.",
+      "evidence_quote": "code.newcli[.]com) to reduce traceability",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "URL3",
+      "observable_type": "url",
+      "value": "code.newcli.com/codex/v1",
+      "description": "Proxy endpoint used for Codex access via the third-party proxy service.",
+      "evidence_quote": "Proxy: code.newcli [.]com/code x/v1",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "URL4",
+      "observable_type": "url",
+      "value": "code.newcli.com/ultra",
+      "description": "Proxy endpoint used for Claude Code access via the third-party proxy service.",
+      "evidence_quote": "Proxy: code.newcli [.]com/ultr a",
+      "grounding_status": "verified"
+    },
+    {
+      "local_id": "URL5",
+      "observable_type": "domain-name",
+      "value": "dashscope.aliyuncs.com",
+      "description": "Direct API endpoint used to access Qwen Code / GLM / Kimi / MiniMax models.",
+      "evidence_quote": "Direct API: dashscope.a liyuncs[.]c om",
+      "grounding_status": "verified"
+    }
+  ],
+  "relationships": [
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "MAL1",
+      "description": "The actor leveraged DeepSeek as their autonomous offensive operator.",
+      "evidence_quote": "leveraged DeepSeek, via the Hermes Agent framework, as their autonomous offensive operator",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL1",
+      "description": "The actor used Hermes Agent as the orchestration framework for their autonomous attack operations.",
+      "evidence_quote": "the actor primarily used the Hermes Agent with DeepSeek as its reasoning agent for the attack phase of this campaign",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL1",
+      "relationship_type": "uses",
+      "target_local_id": "MAL1",
+      "description": "Hermes Agent used DeepSeek as its reasoning engine for code generation, vulnerability assessment, target selection and decision-making.",
+      "evidence_quote": "DeepSeek, operating through the Hermes Agent framework, served as the actor's primary offensive AI tool.",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL12",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL2",
+      "description": "Qwen Code was configured with Qwen as one of its backend models.",
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL12",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL3",
+      "description": "Qwen Code was configured with GLM as one of its backend models.",
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL12",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL4",
+      "description": "Qwen Code was configured with Kimi as one of its backend models.",
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL12",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL5",
+      "description": "Qwen Code was configured with MiniMax as one of its backend models.",
+      "evidence_quote": "the actor configured multiple large language models (LLMs) (Qwen, GLM, Kimi, MiniMax)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL6",
+      "description": "The actor used Claude Code for connectivity testing and proxy validation.",
+      "evidence_quote": "Claude Code for connectivity testing and proxy validation",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL7",
+      "description": "The actor showed signs of using Codex on exploit development directories.",
+      "evidence_quote": "There were also signs of usage of Codex on exploit development directories.",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL8",
+      "description": "The actor integrated the FofaMap MCP server into their toolset.",
+      "evidence_quote": "The actor also integrated the open-source FofaMap-Platinum-Full-Expert Model Context Protocol (MCP) server",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL9",
+      "description": "Hermes Agent used a custom fofoapi.py script leveraging FOFA for internet asset enumeration.",
+      "evidence_quote": "a custom procedure template instructing DeepSeek to use the actor's fofoapi.py script for internet asset enumeration",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL10",
+      "description": "The actor maintains 1DayNews, an automated vulnerability intelligence pipeline, as part of their GitHub activity.",
+      "evidence_quote": "their maintenance of 1DayNews, an automated vulnerability intelligence pipeline",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL10",
+      "relationship_type": "uses",
+      "target_local_id": "MAL1",
+      "description": "1DayNews leverages DeepSeek to filter vulnerability disclosures for exploitability.",
+      "evidence_quote": "Leverages DeepSeek to filter for exploitability",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL11",
+      "description": "The actor orchestrated the Hermes Agent operator via Telegram.",
+      "evidence_quote": "They orchestrated this operator via Telegram for the following activities",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "INFRA1",
+      "description": "The actor routed Claude Code and Codex through the code.newcli.com proxy to reduce traceability.",
+      "evidence_quote": "They routed the two Western tools, Claude Code and Codex, through a third-party proxy service (code.newcli[.]com) to reduce traceability.",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL6",
+      "relationship_type": "communicates-with",
+      "target_local_id": "URL4",
+      "description": "Claude Code was routed via a proxy endpoint.",
+      "evidence_quote": "Proxy: code.newcli [.]com/ultr a",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL7",
+      "relationship_type": "communicates-with",
+      "target_local_id": "URL3",
+      "description": "Codex was routed via a proxy endpoint.",
+      "evidence_quote": "Proxy: code.newcli [.]com/code x/v1",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL1",
+      "relationship_type": "communicates-with",
+      "target_local_id": "URL1",
+      "description": "Hermes Agent accessed DeepSeek directly through its native API endpoint.",
+      "evidence_quote": "Direct API: api.deepsee k[.]com",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL12",
+      "relationship_type": "communicates-with",
+      "target_local_id": "URL5",
+      "description": "Qwen Code accessed its configured models directly through the dashscope API.",
+      "evidence_quote": "Direct API: dashscope.a liyuncs[.]c om",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL1",
+      "relationship_type": "hosts",
+      "target_local_id": "INFRA2",
+      "description": "Hermes Agent started and ran the HTTP file server that exposed the actor's operational environment.",
+      "evidence_quote": "Hermes Agent, responding to a Telegram command, started an HTTP file server (python3 -m http.server 8888) from the actor's home directory",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN1",
+      "description": "The actor's autonomous Hermes Agent/DeepSeek attempted exploitation of the Langflow CVE.",
+      "evidence_quote": "DeepSeek identified a Langflow vulnerability (CVE-2026-33017, CVSS 9.8) and autonomously attempted exploitation",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN2",
+      "description": "The actor attempted to exploit the n8n arbitrary file read vulnerability.",
+      "evidence_quote": "CVE-2026-21858 (arbitrary file read, CVSS 10.0)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN3",
+      "description": "The actor attempted to exploit the n8n sandbox bypass to RCE vulnerability.",
+      "evidence_quote": "CVE-2025-68613 (sandbox bypass to remote code execution (RCE), CVSS 9.9)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN4",
+      "description": "The actor manually exploited the Citrix NetScaler vulnerability for data exfiltration.",
+      "evidence_quote": "Data exfiltration from three organizations via a Citrix NetScaler vulnerability (CVE-2026-3055)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN5",
+      "description": "The actor manually exploited the Marimo Notebook vulnerability for command execution.",
+      "evidence_quote": "Command execution on 11 Marimo notebook instances (CVE-2026-39987)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN6",
+      "description": "The actor manually attempted Java deserialization reverse shells against Apache Tomcat servers.",
+      "evidence_quote": "Java deserialization reverse shell attempts against nine Apache Tomcat servers (CVE-2026-34486)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN7",
+      "description": "The actor manually attempted reverse shell callbacks against IKE VPN endpoints.",
+      "evidence_quote": "Reverse shell callbacks targeting three IKE VPN endpoints (CVE-2026-33824)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN8",
+      "description": "The actor cloned a non-functional PoC for the PAN-OS CVE but did not execute it.",
+      "evidence_quote": "The actor cloned a public repository (qassam-315/PAN-OS-User-ID-Buffer-Overflow-PoC) for CVE-2026-0300",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "MAL1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN1",
+      "description": "DeepSeek autonomously attempted exploitation of the Langflow vulnerability.",
+      "evidence_quote": "DeepSeek identified a Langflow vulnerability (CVE-2026-33017, CVSS 9.8) and autonomously attempted exploitation",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "MAL1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN2",
+      "description": "DeepSeek chained and attempted exploitation of the n8n arbitrary file read vulnerability.",
+      "evidence_quote": "The PoC chains two CVEs into an attack sequence requiring an unauthenticated form with file upload",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "MAL1",
+      "relationship_type": "exploits",
+      "target_local_id": "VULN3",
+      "description": "DeepSeek chained and attempted exploitation of the n8n sandbox bypass RCE vulnerability.",
+      "evidence_quote": "The PoC chains two CVEs into an attack sequence requiring an unauthenticated form with file upload",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "AP1",
+      "description": "The actor employed autonomous AI-driven vulnerability enumeration and exploitation techniques.",
+      "evidence_quote": "combining autonomous AI-driven enumeration with manual exploitation that achieved confirmed impact",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "AP2",
+      "description": "The actor exploited public-facing applications using known CVEs.",
+      "evidence_quote": "targeted infrastructure using seven vulnerabilities",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "AP3",
+      "description": "The actor exfiltrated data via the NetScaler memory read vulnerability and searched for authentication cookies.",
+      "evidence_quote": "The actor searched the exfiltrated data for NetScaler authentication cookies (NSC_AAAC=), indicating session hijacking intent.",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL1",
+      "relationship_type": "uses",
+      "target_local_id": "AP4",
+      "description": "Hermes Agent's custom skill for unauthenticated WebSocket exploitation.",
+      "evidence_quote": "web-terminal-exploitation: unauthenticated WebSocket exploitation, custom-created",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TOOL1",
+      "relationship_type": "uses",
+      "target_local_id": "AP5",
+      "description": "Hermes Agent's framework-bundled godmode skill for LLM jailbreaking.",
+      "evidence_quote": "godmode: LLM jailbreaking, framework-bundled",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "AP6",
+      "description": "The actor attempted reverse shell deployments against Tomcat and IKE VPN targets.",
+      "evidence_quote": "Reverse shell callbacks targeting three IKE VPN endpoints (CVE-2026-33824)",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "CAMP1",
+      "relationship_type": "attributed-to",
+      "target_local_id": "TA1",
+      "description": "This AI-enabled autonomous hacking campaign is attributed to the knaithe/KnYuan threat actor.",
+      "evidence_quote": "Unit 42 identified an AI-enabled autonomous hacking campaign carried out by a Chinese-speaking threat actor.",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "located-at",
+      "target_local_id": "LOC1",
+      "description": "The threat actor is based in Zhuhai, China.",
+      "evidence_quote": "The Chinese-speaking actor is based in Zhuhai, China",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "CAMP1",
+      "relationship_type": "targets",
+      "target_local_id": "LOC1",
+      "description": "The autonomous AI campaigns targeted Chinese domestic infrastructure indiscriminately.",
+      "evidence_quote": "The autonomous AI campaigns targeted Chinese domestic infrastructure indiscriminately.",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "targets",
+      "target_local_id": "ID1",
+      "description": "The actor persistently targeted a Malaysian government entity, exploiting it over multiple days with proxy anonymization.",
+      "evidence_quote": "The actor persistently targeted a government entity in Malaysia and they exploited it over multiple days",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "ID1",
+      "relationship_type": "located-at",
+      "target_local_id": "LOC2",
+      "description": "The targeted government entity is located in Malaysia.",
+      "evidence_quote": "The actor persistently targeted a government entity in Malaysia",
+      "grounding_status": "verified"
+    },
+    {
+      "source_local_id": "TA1",
+      "relationship_type": "uses",
+      "target_local_id": "TOOL12",
+      "description": "The actor used Qwen Code, configured with multiple backend LLMs, in a limited capacity.",
+      "evidence_quote": "Qwen Code: There was minimal usage by the actor, including two sessions total.",
+      "grounding_status": "verified"
+    }
+  ]
+}

@@ -89,10 +89,34 @@ If you'd rather run the whole pipeline in one shot without the notebook:
 .venv\Scripts\python.exe -m stix_generator.pipeline data\reports\<your-report>.pdf --out data\output\<name>.json
 ```
 
+Add `--critic` to run an extra self-critique pass after extraction, where the model re-checks its
+own draft against the report for hallucinations and missed items before returning. This roughly
+doubles the API cost/time of the extraction step (see "What it costs" above) and is off by default.
+
+## Measuring extraction accuracy
+
+`stix_generator/evaluation/` scores an extraction run against a hand-verified gold-standard file
+(precision/recall/F1 for entities, observables, and relationships):
+
+```
+.venv\Scripts\python.exe -m stix_generator.evaluation data\reports\<your-report>.pdf --golden data\golden\<name>.json
+```
+
+To bootstrap a gold file for a new report, run once with `--save-golden` (writes a draft from a
+single extraction — hand-correct it against the source report before trusting it as ground truth):
+
+```
+.venv\Scripts\python.exe -m stix_generator.evaluation data\reports\<your-report>.pdf --save-golden
+```
+
+`--critic` works here too, so you can compare plain vs. critic-assisted extraction quality.
+
 ## Project layout
 
 - `stix_generator/` — the actual pipeline code (ingestion → extraction → construction → validation)
+- `stix_generator/evaluation/` — precision/recall/F1 scoring against gold-standard extractions
 - `data/reports/` — put source PDF/text reports here
 - `data/output/` — generated STIX bundles land here
+- `data/golden/` — hand-verified gold-standard extractions, used to score accuracy
 - `phase1_walkthrough.ipynb` — the interactive notebook described above
 - `third_party/cti-stix2-json-schemas/` — official STIX 2.1 JSON schemas, included as a git submodule (see note in `stix_generator/validation/validator.py` for why); see "Getting the code" above if this folder looks empty

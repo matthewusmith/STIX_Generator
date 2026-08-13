@@ -18,18 +18,20 @@ from stix_generator.ingestion.loader import load_report
 from stix_generator.validation.validator import validate_bundle
 
 
-def run(report_path: Path, output_path: Path, model: str = DEFAULT_MODEL) -> None:
+def run(report_path: Path, output_path: Path, model: str = DEFAULT_MODEL, enable_critic: bool = False) -> None:
     print(f"[1/4] Loading report: {report_path}")
     report_text = load_report(report_path)
     print(f"      {len(report_text):,} characters loaded")
 
     print(f"[2/4] Extracting entities/relationships via {model}...")
-    extraction = extract(report_text, model=model)
+    extraction, grounding_warnings = extract(report_text, model=model, enable_critic=enable_critic)
     print(
         f"      {len(extraction.entities)} entities, "
         f"{len(extraction.observables)} observables, "
         f"{len(extraction.relationships)} relationships"
     )
+    for warning in grounding_warnings:
+        print(f"      GROUNDING WARNING: {warning}")
 
     print("[3/4] Constructing STIX bundle...")
     bundle, warnings = build_bundle(extraction)
@@ -63,12 +65,18 @@ def main() -> None:
     parser.add_argument("report", type=Path, help="Path to a .pdf, .txt, or .md CTI report")
     parser.add_argument("--out", type=Path, default=None, help="Output bundle path (default: data/output/<report_stem>.json)")
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL, help="Claude model to use for extraction")
+    parser.add_argument(
+        "--critic",
+        action="store_true",
+        help="Run an extra self-critique pass after extraction to catch hallucinations/omissions "
+        "(roughly doubles extraction API cost)",
+    )
     args = parser.parse_args()
 
     output_path = args.out or Path("data/output") / f"{args.report.stem}.json"
 
     try:
-        run(args.report, output_path, model=args.model)
+        run(args.report, output_path, model=args.model, enable_critic=args.critic)
     except Exception as exc:  # noqa: BLE001
         print(f"\nPipeline failed: {exc}", file=sys.stderr)
         sys.exit(1)

@@ -5,7 +5,8 @@ import os
 from anthropic import Anthropic
 from pydantic import ValidationError
 
-from stix_generator.extraction.prompts import SYSTEM_PROMPT, build_user_prompt
+from stix_generator.extraction.grounding import verify_grounding
+from stix_generator.extraction.prompts import SYSTEM_PROMPT, build_critic_user_message, build_user_prompt
 from stix_generator.extraction.schema import (
     EXTRACTION_TOOL_NAME,
     ExtractionResult,
@@ -17,11 +18,18 @@ MAX_ATTEMPTS = 3
 MAX_TOKENS_CEILING = 32000
 
 
-def extract(report_text: str, model: str = DEFAULT_MODEL, max_tokens: int = 16000) -> ExtractionResult:
-    client = Anthropic()
-    tools = [extraction_tool_schema()]
-    tool_choice = {"type": "tool", "name": EXTRACTION_TOOL_NAME}
-    messages = [{"role": "user", "content": build_user_prompt(report_text)}]
+def _request_extraction(
+    client: Anthropic,
+    model: str,
+    tools: list[dict],
+    tool_choice: dict,
+    messages: list[dict],
+    max_tokens: int,
+) -> tuple[ExtractionResult, str]:
+    """Runs one logical extraction request against `messages`, retrying on truncation
+    or schema-validation failure. Appends the assistant turn to `messages` on success
+    (so a caller can continue the conversation, e.g. for a critic pass) and returns
+    (result, tool_use_id)."""
     current_max_tokens = max_tokens
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -56,11 +64,12 @@ def extract(report_text: str, model: str = DEFAULT_MODEL, max_tokens: int = 1600
                 f"      extraction attempt {attempt} was truncated (stop_reason=max_tokens) "
                 f"before finishing; retrying with max_tokens={current_max_tokens}..."
             )
-            messages = [{"role": "user", "content": build_user_prompt(report_text)}]
             continue
 
         try:
-            return ExtractionResult.model_validate(tool_use.input)
+            result = ExtractionResult.model_validate(tool_use.input)
+            messages.append({"role": "assistant", "content": response.content})
+            return result, tool_use.id
         except ValidationError as exc:
             if attempt == MAX_ATTEMPTS:
                 raise
@@ -82,3 +91,42 @@ def extract(report_text: str, model: str = DEFAULT_MODEL, max_tokens: int = 1600
             )
 
     raise RuntimeError("unreachable")
+
+
+def extract(
+    report_text: str,
+    model: str = DEFAULT_MODEL,
+    max_tokens: int = 16000,
+    enable_critic: bool = False,
+) -> tuple[ExtractionResult, list[str]]:
+    """Returns (result, grounding_warnings). Set enable_critic=True to run one extra
+    Claude call (roughly doubling this function's API cost) that re-checks the draft
+    for hallucinations and omissions before returning."""
+    client = Anthropic()
+    tools = [extraction_tool_schema()]
+    tool_choice = {"type": "tool", "name": EXTRACTION_TOOL_NAME}
+    messages = [{"role": "user", "content": build_user_prompt(report_text)}]
+
+    result, tool_use_id = _request_extraction(client, model, tools, tool_choice, messages, max_tokens)
+
+    if enable_critic:
+        print("      running critic pass...")
+        messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": "Draft recorded.",
+                    },
+                    {
+                        "type": "text",
+                        "text": build_critic_user_message(report_text),
+                    },
+                ],
+            }
+        )
+        result, _ = _request_extraction(client, model, tools, tool_choice, messages, max_tokens)
+
+    return verify_grounding(result, report_text)

@@ -40,6 +40,14 @@ class ExtractedEntity(BaseModel):
         default_factory=dict,
         description="Type-specific fields, see system prompt for the allowed keys per entity type.",
     )
+    evidence_quote: str = Field(
+        default="",
+        description="A short verbatim quote (<=25 words) copied exactly from the report text supporting this item.",
+    )
+    grounding_status: Literal["verified", "unverified"] = Field(
+        default="unverified",
+        description="Set automatically after extraction — do not populate this yourself.",
+    )
 
 
 class ExtractedObservable(BaseModel):
@@ -47,6 +55,14 @@ class ExtractedObservable(BaseModel):
     observable_type: ObservableType
     value: str = Field(description="Refanged value, e.g. 'code.newcli.com' not 'code.newcli[.]com'.")
     description: str = ""
+    evidence_quote: str = Field(
+        default="",
+        description="A short verbatim quote (<=25 words) copied exactly from the report text supporting this item.",
+    )
+    grounding_status: Literal["verified", "unverified"] = Field(
+        default="unverified",
+        description="Set automatically after extraction — do not populate this yourself.",
+    )
 
 
 class ExtractedRelationship(BaseModel):
@@ -54,6 +70,14 @@ class ExtractedRelationship(BaseModel):
     relationship_type: str = Field(description="STIX relationship-type verb, e.g. 'uses', 'targets', 'exploits', 'located-at', 'indicates'.")
     target_local_id: str
     description: str = ""
+    evidence_quote: str = Field(
+        default="",
+        description="A short verbatim quote (<=25 words) copied exactly from the report text supporting this item.",
+    )
+    grounding_status: Literal["verified", "unverified"] = Field(
+        default="unverified",
+        description="Set automatically after extraction — do not populate this yourself.",
+    )
 
 
 class ExtractionResult(BaseModel):
