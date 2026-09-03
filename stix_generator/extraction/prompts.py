@@ -38,7 +38,8 @@ alpha-2 code, e.g. "CN") when the country is unambiguous, `region` (str) otherwi
 ## Observables
 
 Extract network observables (domains, IPs, URLs) called out as attacker infrastructure or IOCs. \
-**Refang** them — convert `code.newcli[.]com` to `code.newcli.com`. Do not extract observables that \
+**Refang** them — convert `code.newcli[.]com` to `code.newcli.com` and `hxxps://` to `https://`. Keep the \
+URL scheme exactly as the report gives it; do not add one the report doesn't state. Do not extract observables that \
 belong to victims or third parties unless the report frames them as attacker-controlled.
 
 Observables go in the separate top-level `observables` array, using the `observable_type` / `value` \
@@ -58,6 +59,17 @@ directly supported by the text — do not infer relationships the report doesn't
 
 Skip generic defensive/mitigation content (product names offered as protection, vendor contact info, \
 generic advice) — that is not threat intelligence to extract.
+
+## Report metadata
+
+Fill the top-level `report` object with the document's own title, publication date (ISO 8601, only if \
+printed in the document), source URL, and publishing organization. Leave a field empty if the document \
+doesn't state it — do not guess dates.
+
+## Local IDs
+
+Every `local_id` must be unique across entities and observables combined, and every relationship's \
+`source_local_id` / `target_local_id` must refer to a `local_id` you actually assigned.
 
 ## Evidence
 

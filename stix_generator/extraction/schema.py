@@ -8,7 +8,7 @@ handled deterministically in stix_generator.construction — not by the model.
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 EntityType = Literal[
     "threat-actor",
@@ -72,10 +72,52 @@ class ExtractedRelationship(GroundedFields):
     description: str = ""
 
 
+class ReportMetadata(BaseModel):
+    """Document-level facts about the source report itself. Used to build the STIX
+    `report` object that groups everything else and to date-stamp indicators."""
+
+    title: str = Field(default="", description="Title of the report as printed in the document.")
+    published: str = Field(
+        default="",
+        description="Publication date of the report as an ISO 8601 date (YYYY-MM-DD) if stated in the document; otherwise empty.",
+    )
+    source_url: str = Field(default="", description="URL of the report if printed in the document; otherwise empty.")
+    publisher: str = Field(default="", description="Name of the organization that published the report, if stated.")
+
+
 class ExtractionResult(BaseModel):
+    report: ReportMetadata = Field(default_factory=ReportMetadata)
     entities: list[ExtractedEntity]
     observables: list[ExtractedObservable] = Field(default_factory=list)
     relationships: list[ExtractedRelationship] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check_local_id_wiring(self) -> "ExtractionResult":
+        """Reject duplicate local_ids and relationships that point at unknown local_ids.
+        Raising here (rather than patching or dropping in the builder) routes the problem
+        back through the extractor's schema-error retry, so the model fixes its own wiring
+        instead of the pipeline silently losing relationships."""
+        seen: set[str] = set()
+        duplicates: list[str] = []
+        for item in [*self.entities, *self.observables]:
+            if item.local_id in seen:
+                duplicates.append(item.local_id)
+            seen.add(item.local_id)
+
+        dangling = [
+            f"{rel.source_local_id} -{rel.relationship_type}-> {rel.target_local_id}"
+            for rel in self.relationships
+            if rel.source_local_id not in seen or rel.target_local_id not in seen
+        ]
+
+        problems = []
+        if duplicates:
+            problems.append(f"duplicate local_id(s) used by more than one entity/observable: {sorted(set(duplicates))}")
+        if dangling:
+            problems.append(f"relationship(s) reference a local_id that no entity or observable has: {dangling}")
+        if problems:
+            raise ValueError("; ".join(problems))
+        return self
 
 
 EXTRACTION_TOOL_NAME = "record_extraction"

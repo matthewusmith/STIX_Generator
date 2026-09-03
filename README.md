@@ -93,6 +93,19 @@ Add `--critic` to run an extra self-critique pass after extraction, where the mo
 own draft against the report for hallucinations and missed items before returning. This roughly
 doubles the API cost/time of the extraction step (see "What it costs" above) and is off by default.
 
+## What's in the bundle
+
+Every run wraps the output in a STIX `report` object that references everything else and carries the
+source document's title, publication date, and URL when the extractor could find them in the text. Each
+network observable becomes both a cyber observable object (`domain-name`, `ipv4-addr`, `url`, ...) and
+an `indicator` with a STIX pattern, joined by `indicator --based-on--> observable`. A `STIX Generator`
+identity is set as `created_by_ref` on every SDO/SRO.
+
+Object IDs are **deterministic**: they're UUIDv5 values derived from each object's type and name (or
+CVE / ATT&CK ID where one exists), so re-running the same report produces the same IDs and a TIP
+ingests the result as an update rather than a duplicate. `created` / `modified` timestamps still
+reflect the run time.
+
 ## Measuring extraction accuracy
 
 `stix_generator/evaluation/` scores an extraction run against a hand-verified gold-standard file

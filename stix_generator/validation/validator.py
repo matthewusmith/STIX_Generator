@@ -40,7 +40,10 @@ def validate_bundle(bundle_json: str) -> dict:
     """Validate a serialized STIX bundle. Returns {is_valid, errors, warnings}."""
     _ensure_schemas_installed()
 
-    options = ValidationOptions(strict=False)
+    # Check 103 warns that SDO/SRO ids are not UUIDv4. The spec says SHOULD, not MUST;
+    # this project deliberately uses content-derived UUIDv5 ids so re-runs are idempotent
+    # (see construction.builder.stable_id), so that warning is noise here.
+    options = ValidationOptions(strict=False, disabled="103")
     results = validate_string(bundle_json, options)
     if isinstance(results, list):
         is_valid = all(r.is_valid for r in results)
