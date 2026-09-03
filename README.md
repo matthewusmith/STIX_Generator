@@ -101,6 +101,15 @@ network observable becomes both a cyber observable object (`domain-name`, `ipv4-
 an `indicator` with a STIX pattern, joined by `indicator --based-on--> observable`. A `STIX Generator`
 identity is set as `created_by_ref` on every SDO/SRO.
 
+Typed properties that take a STIX open vocabulary (`roles`, `sophistication`, `primary_motivation`,
+`malware_types`, `tool_types`, `infrastructure_types`, `identity_class`, `sectors`) are normalized against
+the spec lists in `stix_generator/stix/vocab.py`; values that don't map are moved into the object's
+description as "Reported <property>: ..." with a build warning. Relationships are checked against the
+spec's allowed (source, verb, target) pairings in `stix_generator/stix/relationships.py` and rewritten
+when needed (e.g. `threat-actor exploits vulnerability` becomes `targets`; anything with no sensible
+rewrite becomes `related-to`), again with a warning. Both tables are also injected into the extraction
+prompt so the model gets them right the first time and the warnings stay rare.
+
 Object IDs are **deterministic**: they're UUIDv5 values derived from each object's type and name (or
 CVE / ATT&CK ID where one exists), so re-running the same report produces the same IDs and a TIP
 ingests the result as an update rather than a duplicate. `created` / `modified` timestamps still

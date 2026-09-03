@@ -651,7 +651,7 @@
     },
     {
       "source_local_id": "TOOL1",
-      "relationship_type": "hosts",
+      "relationship_type": "uses",
       "target_local_id": "INFRA2",
       "description": "Hermes Agent started and ran the HTTP file server that exposed the actor's operational environment.",
       "evidence_quote": "Hermes Agent, responding to a Telegram command, started an HTTP file server (python3 -m http.server 8888) from the actor's home directory",
@@ -659,7 +659,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN1",
       "description": "The actor's autonomous Hermes Agent/DeepSeek attempted exploitation of the Langflow CVE.",
       "evidence_quote": "DeepSeek identified a Langflow vulnerability (CVE-2026-33017, CVSS 9.8) and autonomously attempted exploitation",
@@ -667,7 +667,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN2",
       "description": "The actor attempted to exploit the n8n arbitrary file read vulnerability.",
       "evidence_quote": "CVE-2026-21858 (arbitrary file read, CVSS 10.0)",
@@ -675,7 +675,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN3",
       "description": "The actor attempted to exploit the n8n sandbox bypass to RCE vulnerability.",
       "evidence_quote": "CVE-2025-68613 (sandbox bypass to remote code execution (RCE), CVSS 9.9)",
@@ -683,7 +683,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN4",
       "description": "The actor manually exploited the Citrix NetScaler vulnerability for data exfiltration.",
       "evidence_quote": "Data exfiltration from three organizations via a Citrix NetScaler vulnerability (CVE-2026-3055)",
@@ -691,7 +691,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN5",
       "description": "The actor manually exploited the Marimo Notebook vulnerability for command execution.",
       "evidence_quote": "Command execution on 11 Marimo notebook instances (CVE-2026-39987)",
@@ -699,7 +699,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN6",
       "description": "The actor manually attempted Java deserialization reverse shells against Apache Tomcat servers.",
       "evidence_quote": "Java deserialization reverse shell attempts against nine Apache Tomcat servers (CVE-2026-34486)",
@@ -707,7 +707,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN7",
       "description": "The actor manually attempted reverse shell callbacks against IKE VPN endpoints.",
       "evidence_quote": "Reverse shell callbacks targeting three IKE VPN endpoints (CVE-2026-33824)",
@@ -715,7 +715,7 @@
     },
     {
       "source_local_id": "TA1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN8",
       "description": "The actor cloned a non-functional PoC for the PAN-OS CVE but did not execute it.",
       "evidence_quote": "The actor cloned a public repository (qassam-315/PAN-OS-User-ID-Buffer-Overflow-PoC) for CVE-2026-0300",
@@ -723,7 +723,7 @@
     },
     {
       "source_local_id": "MAL1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN1",
       "description": "DeepSeek autonomously attempted exploitation of the Langflow vulnerability.",
       "evidence_quote": "DeepSeek identified a Langflow vulnerability (CVE-2026-33017, CVSS 9.8) and autonomously attempted exploitation",
@@ -731,7 +731,7 @@
     },
     {
       "source_local_id": "MAL1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN2",
       "description": "DeepSeek chained and attempted exploitation of the n8n arbitrary file read vulnerability.",
       "evidence_quote": "The PoC chains two CVEs into an attack sequence requiring an unauthenticated form with file upload",
@@ -739,7 +739,7 @@
     },
     {
       "source_local_id": "MAL1",
-      "relationship_type": "exploits",
+      "relationship_type": "targets",
       "target_local_id": "VULN3",
       "description": "DeepSeek chained and attempted exploitation of the n8n sandbox bypass RCE vulnerability.",
       "evidence_quote": "The PoC chains two CVEs into an attack sequence requiring an unauthenticated form with file upload",

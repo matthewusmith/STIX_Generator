@@ -26,6 +26,8 @@ from datetime import datetime, timezone
 import stix2
 
 from stix_generator.extraction.schema import ExtractedObservable, ExtractionResult
+from stix_generator.stix.relationships import resolve_relationship
+from stix_generator.stix.vocab import normalize_vocab
 
 # Fixed namespace for UUIDv5 generation. Changing this changes every ID this project emits.
 STIX_GENERATOR_NAMESPACE = uuid.UUID("6f1b0e5a-3c1d-4b3e-9a6c-2d8f7e5a1c42")
@@ -86,8 +88,23 @@ def _generator_identity() -> stix2.Identity:
     )
 
 
+def _apply_vocab(kwargs: dict, props: dict, prop: str, warnings: list[str], label: str) -> None:
+    """Copy props[prop] into kwargs if it normalizes onto the STIX open vocab; anything
+    that doesn't is appended to the description as 'Reported <prop>: ...' so the
+    analyst's original wording survives without polluting the typed property."""
+    if prop not in props or props[prop] in (None, "", []):
+        return
+    value, rejected = normalize_vocab(prop, props[prop], warnings, label)
+    if value is not None:
+        kwargs[prop] = value
+    if rejected:
+        pretty = prop.replace("_", " ")
+        kwargs["description"] = f"{kwargs.get('description', '')} Reported {pretty}: {', '.join(rejected)}.".strip()
+
+
 def _build_entity(entity, warnings: list[str], created_by_ref: str):
     props = entity.properties or {}
+    label = f"{entity.type} '{entity.name}' ({entity.local_id})"
     common = {"name": entity.name, "description": entity.description, "created_by_ref": created_by_ref}
     if entity.aliases:
         common["aliases"] = entity.aliases
@@ -95,34 +112,33 @@ def _build_entity(entity, warnings: list[str], created_by_ref: str):
     if entity.type == "threat-actor":
         kwargs = dict(common, id=stable_id("threat-actor", entity.name))
         for key in ("roles", "sophistication", "primary_motivation"):
-            if key in props:
-                kwargs[key] = props[key]
+            _apply_vocab(kwargs, props, key, warnings, label)
         return stix2.ThreatActor(**kwargs)
 
     if entity.type == "identity":
-        identity_class = props.get("identity_class", "unknown")
-        kwargs = dict(common, id=stable_id("identity", entity.name, identity_class))
-        kwargs["identity_class"] = identity_class
-        if "sectors" in props:
-            kwargs["sectors"] = props["sectors"]
+        tmp: dict = {"description": common["description"]}
+        _apply_vocab(tmp, props, "identity_class", warnings, label)
+        identity_class = tmp.get("identity_class", "unknown")
+        kwargs = dict(common, id=stable_id("identity", entity.name, identity_class), identity_class=identity_class)
+        kwargs["description"] = tmp["description"]
+        _apply_vocab(kwargs, props, "sectors", warnings, label)
         return stix2.Identity(**kwargs)
 
     if entity.type == "malware":
         kwargs = dict(common, id=stable_id("malware", entity.name))
         kwargs["is_family"] = bool(props.get("is_family", False))
-        if "malware_types" in props:
-            kwargs["malware_types"] = props["malware_types"]
+        _apply_vocab(kwargs, props, "malware_types", warnings, label)
         return stix2.Malware(**kwargs)
 
     if entity.type == "tool":
         kwargs = dict(common, id=stable_id("tool", entity.name))
-        if "tool_types" in props:
-            kwargs["tool_types"] = props["tool_types"]
+        _apply_vocab(kwargs, props, "tool_types", warnings, label)
         return stix2.Tool(**kwargs)
 
     if entity.type == "infrastructure":
         kwargs = dict(common, id=stable_id("infrastructure", entity.name))
-        kwargs["infrastructure_types"] = props.get("infrastructure_types") or ["unknown"]
+        _apply_vocab(kwargs, props, "infrastructure_types", warnings, label)
+        kwargs.setdefault("infrastructure_types", ["unknown"])
         return stix2.Infrastructure(**kwargs)
 
     if entity.type == "vulnerability":
@@ -304,7 +320,12 @@ def build_bundle(extraction: ExtractionResult) -> tuple[stix2.Bundle, list[str]]
                 f"'{rel.target_local_id}': endpoint was not built."
             )
             continue
-        objects.append(_relationship(rel.relationship_type, source_ref, target_ref, rel.description, created_by))
+        rel_type, note = resolve_relationship(
+            source_ref.split("--", 1)[0], rel.relationship_type, target_ref.split("--", 1)[0]
+        )
+        if note:
+            warnings.append(f"Relationship {rel.source_local_id} -> {rel.target_local_id}: {note}")
+        objects.append(_relationship(rel_type, source_ref, target_ref, rel.description, created_by))
 
     report = _build_report(
         extraction,
