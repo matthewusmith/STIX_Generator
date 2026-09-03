@@ -1,3 +1,12 @@
+"""Prompts for the three extraction passes.
+
+Prompt-caching note: the Anthropic cache is prefix-based over (tools, system, messages).
+To let passes B and C reuse the cached report from pass A, every pass sends the *same*
+tool list and the *same* system prompt, and the report itself is the first user content
+block with a cache breakpoint on it. Only the instruction block after the report differs
+per pass. `tool_choice` selects which tool each pass must call.
+"""
+
 from stix_generator.stix import vocab
 from stix_generator.stix.relationships import prompt_table
 
@@ -7,9 +16,11 @@ def _vocab(values: list[str]) -> str:
 
 
 SYSTEM_PROMPT = f"""You are a cyber threat intelligence (CTI) analyst extracting structured data from a \
-narrative threat report. You identify entities, observables, and relationships that will later be \
-converted into STIX 2.1 objects by deterministic code — your only job is faithful extraction, not \
-formatting. Call the record_extraction tool exactly once with your complete findings.
+narrative threat report. The work happens in three passes, each requested separately: (A) entities and \
+observables, (B) relationships between the entities already found, (C) verification of those \
+relationships. The results are converted into STIX 2.1 objects by deterministic code — your only job is \
+faithful extraction, not formatting. In every pass, call the requested tool exactly once with your \
+complete findings.
 
 ## Grounding rules
 
@@ -40,7 +51,9 @@ APIs, developer tooling. properties: `tool_types` (list, from: {_vocab(vocab.TOO
   Tie-breaker: ask "would the vendor/author describe this as malicious?" If no, it is a `tool`, however \
 abusively it was used. An LLM such as DeepSeek or an agent framework is always a `tool`, never `malware`.
 - **infrastructure**: attacker-controlled or attacker-used infrastructure such as C2 servers, proxies, or \
-hosting. properties: `infrastructure_types` (list, from: {_vocab(vocab.INFRASTRUCTURE_TYPE)}).
+hosting. properties: `infrastructure_types` (list, from: {_vocab(vocab.INFRASTRUCTURE_TYPE)}). When an \
+actor or tool talks to a domain/IP, that endpoint is an infrastructure entity — extract it so relationships \
+can be routed through it.
 - **vulnerability**: a specific CVE or named flaw. Use the CVE ID as `name` when available. properties: \
 `cve_id` (str), `cvss_score` (number), `patched_version` (str) — include only what's stated.
 - **attack-pattern**: a technique/method used (map to MITRE ATT&CK if the text supports it). properties: \
@@ -54,32 +67,12 @@ alpha-2 code, e.g. "CN") when the country is unambiguous, `region` (str) otherwi
 
 Extract network observables (domains, IPs, URLs) called out as attacker infrastructure or IOCs. \
 **Refang** them — convert `code.newcli[.]com` to `code.newcli.com` and `hxxps://` to `https://`. Keep the \
-URL scheme exactly as the report gives it; do not add one the report doesn't state. Do not extract observables that \
-belong to victims or third parties unless the report frames them as attacker-controlled.
+URL scheme exactly as the report gives it; do not add one the report doesn't state. Do not extract \
+observables that belong to victims or third parties unless the report frames them as attacker-controlled.
 
 Observables go in the separate top-level `observables` array, using the `observable_type` / `value` \
-fields — never inside `entities`. The `entities` array is only for the nine entity types listed above \
-(threat-actor, identity, malware, tool, infrastructure, vulnerability, attack-pattern, campaign, \
-location). A domain name is an observable, not an entity, even if it's central to the story.
-
-## Relationships
-
-Use `source_local_id` / `target_local_id` referring to the `local_id`s you assigned above (entities or \
-observables). STIX 2.1 defines which verbs are valid between which object types; use only pairings from \
-this table (observables are the types domain-name, ipv4-addr, ipv6-addr, url):
-
-{prompt_table()}
-
-Common notes: only `malware` can `exploits` a vulnerability — a threat-actor or tool `targets` it. A \
-threat-actor or tool that talks to a domain/IP `uses` an `infrastructure` entity, which in turn \
-`communicates-with` or `consists-of` the observable; do not draw `communicates-with` from a tool or actor. \
-Fall back to `related-to` only if nothing in the table fits. Every relationship must be directly \
-supported by the text — do not infer relationships the report doesn't state.
-
-## What to skip
-
-Skip generic defensive/mitigation content (product names offered as protection, vendor contact info, \
-generic advice) — that is not threat intelligence to extract.
+fields — never inside `entities`. The `entities` array is only for the nine entity types listed above. A \
+domain name is an observable, not an entity, even if it's central to the story.
 
 ## Report metadata
 
@@ -89,40 +82,102 @@ doesn't state it — do not guess dates.
 
 ## Local IDs
 
-Every `local_id` must be unique across entities and observables combined, and every relationship's \
-`source_local_id` / `target_local_id` must refer to a `local_id` you actually assigned.
+Every `local_id` must be unique across entities and observables combined.
+
+## Relationships (pass B)
+
+Relationships connect the `local_id`s from pass A; you will be given the exact list. STIX 2.1 defines \
+which verbs are valid between which object types; use only pairings from this table (observables are the \
+types domain-name, ipv4-addr, ipv6-addr, url):
+
+{prompt_table()}
+
+Common notes: only `malware` can `exploits` a vulnerability — a threat-actor or tool `targets` it. A \
+threat-actor or tool that talks to a domain/IP `uses` an `infrastructure` entity, which in turn \
+`communicates-with` or `consists-of` the observable; do not draw `communicates-with` from a tool or actor. \
+Fall back to `related-to` only if nothing in the table fits. Every relationship must be directly \
+supported by the text — do not infer relationships the report doesn't state. Do not introduce entities \
+that were not in the list; if a needed entity is missing, omit the relationship.
+
+## Verification (pass C)
+
+You will be shown numbered relationships (source, verb, target) without any justification. Judge each \
+one against the report text alone:
+- `supported`: the text states this relationship with this verb. Give the quote.
+- `downgrade`: the text connects these two items, but with a weaker or different verb than claimed \
+(e.g. `exploits` claimed, only `targets` supported; or nothing more specific than `related-to`). Give the \
+replacement verb and the quote that supports it.
+- `unsupported`: the text does not connect these two items. No quote.
+Judge every index exactly once. Do not add relationships.
+
+## What to skip
+
+Skip generic defensive/mitigation content (product names offered as protection, vendor contact info, \
+generic advice) — that is not threat intelligence to extract.
 
 ## Evidence
 
-For every entity, observable, and relationship, set `evidence_quote` to a short verbatim quote \
-(<=25 words) copied exactly from the report text that supports it — not a paraphrase.
+Every `evidence_quote` is a short verbatim quote (<=25 words) copied exactly from the report text — not \
+a paraphrase.
 """
 
 
-def build_user_prompt(report_text: str) -> str:
-    return (
-        "Extract all threat intelligence entities, observables, and relationships from the following "
-        "report. Call record_extraction once with the complete result.\n\n"
-        "--- BEGIN REPORT ---\n"
-        f"{report_text}\n"
-        "--- END REPORT ---"
-    )
+def report_block(report_text: str) -> dict:
+    """The cached user content block shared by every pass."""
+    return {
+        "type": "text",
+        "text": f"--- BEGIN REPORT ---\n{report_text}\n--- END REPORT ---",
+        "cache_control": {"type": "ephemeral"},
+    }
 
 
-CRITIC_PROMPT = """You are now reviewing your own extraction against the report text you were given \
-above, acting as a skeptical second reader. Check for two distinct kinds of error:
+PASS_A_INSTRUCTION = (
+    "Pass A. Extract all threat intelligence entities and observables from the report above, plus the "
+    "report metadata. Call record_entities once with the complete result."
+)
+
+CRITIC_INSTRUCTION = """Pass A review. You are now reviewing your own entity/observable extraction against \
+the report text above, acting as a skeptical second reader. Check for two distinct kinds of error:
 
 1. **Hallucinations / unsupported items** — anything in your draft that the text doesn't actually \
 state or clearly imply (including a bad `evidence_quote` that doesn't really appear in the text or \
-doesn't really support the item). Remove or fix these.
-2. **Omissions** — entities, observables, or relationships that are clearly stated in the report but \
-missing from your draft. Add these, following the same rules and vocabulary as before (grounding \
-rules, entity/observable/relationship type definitions, refanging, evidence quotes).
+doesn't really support the item), and any entity given the wrong type. Remove or fix these.
+2. **Omissions** — entities or observables that are clearly stated in the report but missing from \
+your draft. Add these, following the same rules and vocabulary as before.
 
-Do not remove or change anything that is already correct and well-supported. Call record_extraction \
-one more time with the complete corrected result — the full set of entities, observables, and \
-relationships, not just the changes."""
+Do not remove or change anything that is already correct and well-supported. Call record_entities one \
+more time with the complete corrected result — the full set, not just the changes."""
 
 
-def build_critic_user_message() -> str:
-    return CRITIC_PROMPT
+def roster(entities, observables) -> str:
+    lines = ["local_id | type | name | aliases"]
+    for e in entities:
+        aliases = ", ".join(e.aliases) if e.aliases else "-"
+        lines.append(f"{e.local_id} | {e.type} | {e.name} | {aliases}")
+    for o in observables:
+        lines.append(f"{o.local_id} | {o.observable_type} | {o.value} | -")
+    return "\n".join(lines)
+
+
+def pass_b_instruction(entities, observables) -> str:
+    return (
+        "Pass B. These are the entities and observables extracted from the report above:\n\n"
+        f"{roster(entities, observables)}\n\n"
+        "Extract every relationship the report states between them, using only these local_ids and only "
+        "verbs valid for the source/target types. Call record_relationships once with the complete result."
+    )
+
+
+def pass_c_instruction(relationships, entities, observables) -> str:
+    names = {e.local_id: f"{e.type} '{e.name}'" for e in entities}
+    names.update({o.local_id: f"{o.observable_type} '{o.value}'" for o in observables})
+    lines = [
+        f"[{i}] {names.get(r.source_local_id, r.source_local_id)} --{r.relationship_type}--> "
+        f"{names.get(r.target_local_id, r.target_local_id)}"
+        for i, r in enumerate(relationships)
+    ]
+    return (
+        "Pass C. Judge each of the following proposed relationships against the report above:\n\n"
+        + "\n".join(lines)
+        + "\n\nCall record_verdicts once with a verdict for every index."
+    )

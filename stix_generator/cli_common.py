@@ -14,10 +14,15 @@ def add_extraction_args(parser: argparse.ArgumentParser) -> None:
         "--critic",
         action="store_true",
         help="Run an extra self-critique pass after extraction to catch hallucinations/omissions "
-        "(roughly doubles extraction API cost)",
+        "(one extra API call)",
+    )
+    parser.add_argument(
+        "--no-verifier",
+        action="store_true",
+        help="Skip pass C (relationship verification); two-pass mode for A/B comparison",
     )
 
 
-def print_grounding_warnings(warnings: list[str], indent: str = "  ") -> None:
+def print_extraction_warnings(warnings: list[str], indent: str = "  ") -> None:
     for warning in warnings:
-        print(f"{indent}GROUNDING WARNING: {warning}")
+        print(f"{indent}EXTRACTION NOTE: {warning}")

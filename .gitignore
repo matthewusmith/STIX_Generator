@@ -15,3 +15,5 @@ __pycache__/
 # Generated output
 data/output/
 data/reports/
+data/runs/
+.pytest_cache/

@@ -12,26 +12,41 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from stix_generator.cli_common import add_extraction_args, print_grounding_warnings
+from stix_generator.cli_common import add_extraction_args, print_extraction_warnings
 from stix_generator.construction.builder import build_bundle
 from stix_generator.extraction.extractor import DEFAULT_MODEL, extract
 from stix_generator.ingestion.loader import load_report
 from stix_generator.validation.validator import validate_bundle
 
 
-def run(report_path: Path, output_path: Path, model: str = DEFAULT_MODEL, enable_critic: bool = False) -> None:
+def run(
+    report_path: Path,
+    output_path: Path,
+    model: str = DEFAULT_MODEL,
+    enable_critic: bool = False,
+    enable_verifier: bool = True,
+) -> None:
     print(f"[1/4] Loading report: {report_path}")
     report_text = load_report(report_path)
     print(f"      {len(report_text):,} characters loaded")
 
     print(f"[2/4] Extracting entities/relationships via {model}...")
-    extraction, grounding_warnings = extract(report_text, model=model, enable_critic=enable_critic)
+    extraction, extraction_warnings = extract(
+        report_text, model=model, enable_critic=enable_critic, enable_verifier=enable_verifier
+    )
     print(
         f"      {len(extraction.entities)} entities, "
         f"{len(extraction.observables)} observables, "
         f"{len(extraction.relationships)} relationships"
     )
-    print_grounding_warnings(grounding_warnings, indent="      ")
+    print_extraction_warnings(extraction_warnings, indent="      ")
+
+    # Persist the IR next to the bundle so it can be re-scored or re-built without
+    # another API call (see `python -m stix_generator.evaluation --from-extraction`).
+    extraction_path = output_path.with_suffix(".extraction.json")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    extraction_path.write_text(extraction.model_dump_json(indent=2), encoding="utf-8")
+    print(f"      extraction saved to {extraction_path}")
 
     print("[3/4] Constructing STIX bundle...")
     bundle, warnings = build_bundle(extraction)
@@ -69,7 +84,13 @@ def main() -> None:
     output_path = args.out or Path("data/output") / f"{args.report.stem}.json"
 
     try:
-        run(args.report, output_path, model=args.model, enable_critic=args.critic)
+        run(
+            args.report,
+            output_path,
+            model=args.model,
+            enable_critic=args.critic,
+            enable_verifier=not args.no_verifier,
+        )
     except Exception as exc:  # noqa: BLE001
         print(f"\nPipeline failed: {exc}", file=sys.stderr)
         sys.exit(1)

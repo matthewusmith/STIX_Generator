@@ -3,6 +3,7 @@
 Usage:
     python -m stix_generator.evaluation data/reports/foo.pdf --golden data/golden/foo.json
     python -m stix_generator.evaluation data/reports/foo.pdf --save-golden
+    python -m stix_generator.evaluation data/reports/foo.pdf --from-extraction data/output/foo.extraction.json
 """
 
 import argparse
@@ -11,7 +12,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from stix_generator.cli_common import add_extraction_args, print_grounding_warnings
+from stix_generator.cli_common import add_extraction_args, print_extraction_warnings
 from stix_generator.evaluation.scoring import print_scorecard, score_extraction
 from stix_generator.extraction.extractor import extract
 from stix_generator.extraction.schema import ExtractionResult
@@ -36,16 +37,39 @@ def main() -> None:
         help="Run extraction once and write the raw result as a DRAFT gold file instead of scoring "
         "(requires hand review before it's trustworthy ground truth)",
     )
+    parser.add_argument(
+        "--from-extraction",
+        type=Path,
+        default=None,
+        help="Score a previously saved ExtractionResult JSON instead of calling the API",
+    )
+    parser.add_argument(
+        "--save-extraction",
+        type=Path,
+        default=None,
+        help="Also write this run's ExtractionResult JSON here (e.g. to keep baseline runs for later re-scoring)",
+    )
     args = parser.parse_args()
 
     golden_path = args.golden or Path("data/golden") / f"{args.report.stem}.json"
 
-    print(f"Loading report: {args.report}")
-    report_text = load_report(args.report)
+    if args.from_extraction:
+        print(f"Loading saved extraction: {args.from_extraction}")
+        result = ExtractionResult.model_validate_json(args.from_extraction.read_text(encoding="utf-8"))
+    else:
+        print(f"Loading report: {args.report}")
+        report_text = load_report(args.report)
+        mode = "three-pass" if not args.no_verifier else "two-pass"
+        print(f"Extracting via {args.model} ({mode}{', with critic' if args.critic else ''})...")
+        result, warnings = extract(
+            report_text, model=args.model, enable_critic=args.critic, enable_verifier=not args.no_verifier
+        )
+        print_extraction_warnings(warnings)
 
-    print(f"Extracting via {args.model}{' (with critic pass)' if args.critic else ''}...")
-    result, grounding_warnings = extract(report_text, model=args.model, enable_critic=args.critic)
-    print_grounding_warnings(grounding_warnings)
+    if args.save_extraction:
+        args.save_extraction.parent.mkdir(parents=True, exist_ok=True)
+        args.save_extraction.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+        print(f"Extraction saved to {args.save_extraction}")
 
     if args.save_golden:
         golden_path.parent.mkdir(parents=True, exist_ok=True)

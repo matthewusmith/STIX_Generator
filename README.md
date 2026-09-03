@@ -89,9 +89,18 @@ If you'd rather run the whole pipeline in one shot without the notebook:
 .venv\Scripts\python.exe -m stix_generator.pipeline data\reports\<your-report>.pdf --out data\output\<name>.json
 ```
 
-Add `--critic` to run an extra self-critique pass after extraction, where the model re-checks its
-own draft against the report for hallucinations and missed items before returning. This roughly
-doubles the API cost/time of the extraction step (see "What it costs" above) and is off by default.
+Extraction is three model calls: (A) entities and observables, (B) relationships between the
+entities pass A found, (C) a verdict on every relationship — `supported`, `downgrade` (to the weaker
+verb the text actually supports), or `unsupported` (dropped). Every call sends the same tools, system
+prompt, and a cached copy of the report, so passes B and C mostly read from the prompt cache rather
+than re-paying for the report.
+
+Flags: `--critic` adds one call after pass A where the model re-reads its own entity draft for
+hallucinations, wrong types, and omissions. `--no-verifier` skips pass C (two-pass mode), which is
+there so you can measure what pass C is buying you.
+
+The pipeline also writes `<name>.extraction.json` next to the bundle — the intermediate result before
+STIX construction — so a run can be re-scored or re-built without another API call.
 
 ## What's in the bundle
 
@@ -131,7 +140,29 @@ single extraction — hand-correct it against the source report before trusting 
 .venv\Scripts\python.exe -m stix_generator.evaluation data\reports\<your-report>.pdf --save-golden
 ```
 
-`--critic` works here too, so you can compare plain vs. critic-assisted extraction quality.
+`--critic` and `--no-verifier` work here too. To score without calling the API, point at a saved
+extraction (from the pipeline's `.extraction.json` or from `--save-extraction`):
+
+```
+.venv\Scripts\python.exe -m stix_generator.evaluation data\reports\<your-report>.pdf --from-extraction data\output\<name>.extraction.json
+```
+
+Because a single LLM run is noisy, compare configurations across several runs each. A typical
+baseline capture is three runs of `--no-verifier --save-extraction data\runs\<name>-2pass-N.json`,
+then three of the default, then `--from-extraction` on each to read the scorecards side by side.
+
+The scorecard reports relationships two ways: overall, and "given both endpoints matched" — the
+latter only counts gold relationships whose endpoints the model also found, which separates missed
+links from missed entities. Right-endpoints-wrong-verb cases are listed separately.
+
+## Running the tests
+
+```
+.venv\Scripts\python.exe -m pytest
+```
+
+The extractor tests use a scripted fake client (`tests/fake_anthropic.py`), so nothing here touches
+the network or needs an API key.
 
 ## Project layout
 

@@ -92,6 +92,13 @@ class ScoreCard:
     observables_overall: CategoryScore
     observables_by_type: dict[str, CategoryScore]
     relationships_overall: CategoryScore
+    # Only gold relationships whose *both* endpoints were matched to a predicted
+    # entity/observable. Separates "missed the link" from "missed the endpoint".
+    relationships_conditional: CategoryScore = field(default_factory=CategoryScore)
+    # Predicted relationships with the right endpoints but the wrong verb (already an
+    # FN+FP in the counts above; listed here because after spec-pairing rewrites a verb
+    # miss is often a modeling choice rather than an extraction error).
+    verb_mismatches: list[tuple[str, str, str]] = field(default_factory=list)
     type_confusions: list[tuple[str, str, str]] = field(default_factory=list)
     unmatched_gold: dict[str, list[str]] = field(default_factory=dict)
     unmatched_pred: dict[str, list[str]] = field(default_factory=dict)
@@ -176,31 +183,59 @@ def _match_observables(gold: list[ExtractedObservable], pred: list[ExtractedObse
     return matches, by_type, leftover_gold, leftover_pred
 
 
-def _match_relationships(gold_rels, pred_rels, gold_to_pred_id: dict[str, str]) -> CategoryScore:
+def _match_relationships(
+    gold_rels, pred_rels, gold_to_pred_id: dict[str, str]
+) -> tuple[CategoryScore, CategoryScore, list[tuple[str, str, str]]]:
+    """Returns (overall, conditional, verb_mismatches). See ScoreCard for definitions."""
     consumed_pred: set[int] = set()
     tp = fn = 0
+    cond_tp = cond_fn = 0
+    verb_mismatches: list[tuple[str, str, str]] = []
     for g in gold_rels:
         mapped_source = gold_to_pred_id.get(g.source_local_id)
         mapped_target = gold_to_pred_id.get(g.target_local_id)
+        endpoints_matched = mapped_source is not None and mapped_target is not None
         found = None
-        if mapped_source is not None and mapped_target is not None:
+        wrong_verb = None
+        if endpoints_matched:
             for idx, p in enumerate(pred_rels):
                 if idx in consumed_pred:
                     continue
-                if (
-                    p.source_local_id == mapped_source
-                    and p.target_local_id == mapped_target
-                    and p.relationship_type.lower() == g.relationship_type.lower()
-                ):
-                    found = idx
-                    break
+                if p.source_local_id == mapped_source and p.target_local_id == mapped_target:
+                    if p.relationship_type.lower() == g.relationship_type.lower():
+                        found = idx
+                        break
+                    if wrong_verb is None:
+                        wrong_verb = p.relationship_type
         if found is not None:
             consumed_pred.add(found)
             tp += 1
+            cond_tp += 1
         else:
             fn += 1
+            if endpoints_matched:
+                cond_fn += 1
+                if wrong_verb is not None:
+                    verb_mismatches.append(
+                        (f"{g.source_local_id} -> {g.target_local_id}", g.relationship_type, wrong_verb)
+                    )
     fp = len(pred_rels) - len(consumed_pred)
-    return CategoryScore(tp=tp, fp=fp, fn=fn)
+    # Conditional FP: predicted relationships between two matched endpoints that gold
+    # doesn't have. Predictions touching an unmatched endpoint are excluded — they're
+    # an entity-level error, not a relationship-level one.
+    matched_pred_ids = set(gold_to_pred_id.values())
+    cond_fp = sum(
+        1
+        for idx, p in enumerate(pred_rels)
+        if idx not in consumed_pred
+        and p.source_local_id in matched_pred_ids
+        and p.target_local_id in matched_pred_ids
+    )
+    return (
+        CategoryScore(tp=tp, fp=fp, fn=fn),
+        CategoryScore(tp=cond_tp, fp=cond_fp, fn=cond_fn),
+        verb_mismatches,
+    )
 
 
 def score_extraction(gold: ExtractionResult, predicted: ExtractionResult) -> ScoreCard:
@@ -218,7 +253,9 @@ def score_extraction(gold: ExtractionResult, predicted: ExtractionResult) -> Sco
         {gold.observables[gi].local_id: predicted.observables[pi].local_id for gi, pi in obs_matches}
     )
 
-    relationships_overall = _match_relationships(gold.relationships, predicted.relationships, gold_to_pred_id)
+    relationships_overall, relationships_conditional, verb_mismatches = _match_relationships(
+        gold.relationships, predicted.relationships, gold_to_pred_id
+    )
 
     return ScoreCard(
         entities_overall=_overall(entities_by_type),
@@ -226,6 +263,8 @@ def score_extraction(gold: ExtractionResult, predicted: ExtractionResult) -> Sco
         observables_overall=_overall(observables_by_type),
         observables_by_type=observables_by_type,
         relationships_overall=relationships_overall,
+        relationships_conditional=relationships_conditional,
+        verb_mismatches=verb_mismatches,
         type_confusions=type_confusions,
         unmatched_gold={
             "entities": [gold.entities[gi].local_id for gi in leftover_gold_e],
@@ -255,6 +294,12 @@ def print_scorecard(scorecard: ScoreCard) -> None:
     _print_category("overall", scorecard.observables_overall, scorecard.observables_by_type)
     print("Relationships:")
     _print_category("overall", scorecard.relationships_overall)
+    _print_category("given both endpoints matched", scorecard.relationships_conditional)
+
+    if scorecard.verb_mismatches:
+        print("\nVerb mismatches (right endpoints, wrong verb — counted as FN+FP above):")
+        for endpoints, gold_verb, pred_verb in scorecard.verb_mismatches:
+            print(f"  {endpoints}: gold '{gold_verb}' vs predicted '{pred_verb}'")
 
     if scorecard.type_confusions:
         print("\nType confusions (name matched, type didn't — still counted as FN+FP above, not a wash):")
